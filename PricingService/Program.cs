@@ -1,16 +1,25 @@
+using PricingService.Domain;
+using PricingService.Infrastructure;
+using Steeltoe.Discovery.Client;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Controllers (dùng Newtonsoft vì QuestionAnswer có JsonConverter của Newtonsoft)
+builder.Services
+    .AddControllers(options => options.Filters.Add<ValidationExceptionFilter>())
+    .AddNewtonsoftJson();
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton<IDataStore, InMemoryDataStore>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+// Task #2 (Lab 5): đăng ký PricingService vào Eureka
+builder.Services.AddDiscoveryClient(builder.Configuration);
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -18,10 +27,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
 
+// Cho phép project IntegrationTest truy cập Program
+public partial class Program { }
